@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; form-action 'none'; object-src 'none'; base-uri 'self';">
+  <title>UCPGATE · Universal Commerce Protocol (/.well-known/ucp), AP2 &amp; A2A Readiness Auditor</title>
+  <meta name="description" content="Zero-backend 10-gate Universal Commerce Protocol (/.well-known/ucp, 2026-01-23), AP2 payment mandate, Stateless MCP (2026-07-28), and A2A (/.well-known/agent.json) readiness auditor plus 1-click manifest and Cloudflare Worker builder.">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-frame" data-ui>
+    <header class="frame-topbar">
+      <div class="topbar-inner">
+        <div class="brand-cluster">
+          <svg class="brand-mark" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <rect x="2.5" y="3" width="15" height="14" rx="2.5"></rect>
+            <path d="M6 8h8M6 12h5.5M13.5 12l1.5 1.5"></path>
+          </svg>
+          <span class="brand-name">UCPGATE</span>
+          <span class="brand-scope">Spec <code>2026-01-23</code> · MCP <code>2026-07-28</code> · AP2 Mandates</span>
+        </div>
+
+        <nav class="underline-tabs" role="tablist" aria-label="Workbench mode">
+          <button type="button" class="u-tab" id="tab-audit" role="tab" aria-selected="true" aria-controls="view-audit">
+            10-Gate /.well-known/ucp Validator
+          </button>
+          <button type="button" class="u-tab" id="tab-builder" role="tab" aria-selected="false" aria-controls="view-builder">
+            1-Click Manifest &amp; Edge Builder
+          </button>
+        </nav>
+
+        <div class="privacy-stamp" title="Strict Content-Security-Policy connect-src 'none' blocks all outbound network requests.">
+          <span class="privacy-dot" aria-hidden="true"></span>
+          <span>Browser-local (<code>connect-src 'none'</code>)</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="white-sheet">
+      <div class="sheet-canvas">
+        <!-- ================================================================ -->
+        <!-- TAB 1: 10-Gate /.well-known/ucp + AP2 + A2A Validator            -->
+        <!-- ================================================================ -->
+        <section id="view-audit" role="tabpanel" aria-labelledby="tab-audit">
+          <div class="title-row">
+            <div>
+              <div class="title-cluster">
+                <h1 class="page-title">Universal Commerce Protocol &amp; AP2 Readiness Audit</h1>
+                <span class="status-pill pill-positive" id="audit-overall-pill">Compliant</span>
+              </div>
+              <p class="page-finding" id="audit-headline-finding">
+                nordic-roast.shop passes all 10 UCP 2026-01-23, Stateless MCP 2026-07-28, Schema.org Offer, and AP2 payment mandate gates.
+              </p>
+            </div>
+            <div class="title-actions">
+              <button type="button" class="btn btn-secondary" id="btn-open-builder">
+                Open 1-Click Manifest Builder
+              </button>
+              <button type="button" class="btn btn-primary" id="btn-run-audit">
+                Run 10-gate audit
+              </button>
+            </div>
+          </div>
+
+          <div class="preset-bar" role="group" aria-label="Reference store presets">
+            <span class="preset-caption">Reference presets:</span>
+            <button type="button" class="chip-btn" data-preset="production-google-stripe-ucp" aria-pressed="true">
+              Production 2026-01-23 Google Pay + Stripe Store
+            </button>
+            <button type="button" class="chip-btn" data-preset="broken-shopify-draft" aria-pressed="false">
+              Broken Shopify Draft (v1.0 + Leaked Token + JPY/USD Drift)
+            </button>
+            <button type="button" class="chip-btn" data-preset="cyclic-http-ssrf" aria-pressed="false">
+              Cyclic extends + Insecure HTTP / SSRF Config
+            </button>
+          </div>
+
+          <!-- Divided 4-KPI Ledger Strip (4 * 288px = 1152px) -->
+          <div class="kpi-strip">
+            <div class="kpi-cell">
+              <span class="kpi-label">UCP readiness score</span>
+              <div class="kpi-value kpi-lead num" id="kpi-score">100<span class="kpi-unit"> /100</span></div>
+              <div class="kpi-sub" id="kpi-grade">Grade A · Spec 2026-01-23</div>
+            </div>
+            <div class="kpi-cell">
+              <span class="kpi-label">Gate distribution</span>
+              <div class="kpi-value num" id="kpi-gates">10<span class="kpi-unit"> /10 pass</span></div>
+              <div class="kpi-sub num" id="kpi-findings">0 warn · 0 fail · 0 findings</div>
+            </div>
+            <div class="kpi-cell">
+              <span class="kpi-label">Capability extends DAG</span>
+              <div class="kpi-value num" id="kpi-dag-nodes">5<span class="kpi-unit"> nodes</span></div>
+              <div class="kpi-sub" id="kpi-dag-state">Acyclic · 3 verified edges</div>
+            </div>
+            <div class="kpi-cell">
+              <span class="kpi-label">Payment &amp; discovery surfaces</span>
+              <div class="kpi-value num" id="kpi-handlers">3<span class="kpi-unit"> rails</span></div>
+              <div class="kpi-sub" id="kpi-surfaces">REST + MCP + A2A + Offer</div>
+            </div>
+          </div>
+
+          <div id="audit-parse-error" class="inline-error" hidden></div>
+
+          <!-- Two-Column Audit Workbench: 444px + 24px + 684px = 1152px -->
+          <div class="workbench-grid">
+            <!-- Left Column: Manifest / Bundle Input Editor -->
+            <section class="card-panel" aria-labelledby="editor-heading">
+              <div class="card-header">
+                <div>
+                  <h2 class="card-title" id="editor-heading">/.well-known/ucp Manifest or Audit Bundle</h2>
+                  <p class="card-sub">Paste raw <code>/.well-known/ucp</code> JSON/JSONC or a composite bundle with <code>agent_card</code>, <code>http_headers</code>, and <code>schema_org_offers</code>.</p>
+                </div>
+              </div>
+
+              <label class="sr-only" for="txt-audit-input">UCP JSON or JSONC input</label>
+              <textarea id="txt-audit-input" class="json-editor" spellcheck="false" rows="24"></textarea>
+
+              <div class="editor-actions">
+                <label class="btn btn-secondary" for="inp-upload-json">
+                  Load JSON file
+                </label>
+                <input type="file" id="inp-upload-json" accept=".json,application/json,text/plain" hidden>
+                <button type="button" class="btn btn-secondary" id="btn-load-remediated">
+                  Load remediated 100/100 bundle
+                </button>
+              </div>
+            </section>
+
+            <!-- Right Column: Signature Capability DAG + 10-Gate Table + Detail Pane -->
+            <div class="right-column">
+              <!-- Signature Element: Live Capability Negotiation DAG -->
+              <section class="card-panel" aria-labelledby="dag-heading">
+                <div class="card-header">
+                  <div>
+                    <h2 class="card-title" id="dag-heading">Capability Negotiation &amp; extends Inheritance DAG</h2>
+                    <p class="card-sub" id="dag-caption">Topological inheritance verified from root dev.ucp.shopping.checkout.</p>
+                  </div>
+                  <div class="dag-legend" aria-label="Graph legend">
+                    <span class="legend-chip"><span class="dot-valid" aria-hidden="true"></span>Verified edge</span>
+                    <span class="legend-chip"><span class="dot-fault" aria-hidden="true"></span>Cycle or missing parent</span>
+                  </div>
+                </div>
+                <svg id="dag-svg" class="dag-svg" viewBox="0 0 644 172" role="img" aria-label="Capability extends directed graph"></svg>
+              </section>
+
+              <!-- 10-Gate Evaluation Table -->
+              <section class="card-panel" aria-labelledby="gates-table-heading">
+                <div class="card-header">
+                  <h2 class="card-title" id="gates-table-heading">10 Agentic Commerce Readiness Gates</h2>
+                  <span class="card-meta" id="gates-click-hint">Select a row to inspect findings and spec remediation</span>
+                </div>
+                <div class="table-wrap">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Gate</th>
+                        <th scope="col">Specification check</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="num">Points</th>
+                      </tr>
+                    </thead>
+                    <tbody id="gates-tbody"></tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- Selected Gate Findings & Remediation -->
+              <section class="card-panel" aria-labelledby="gate-detail-heading">
+                <div class="card-header">
+                  <h2 class="card-title" id="gate-detail-heading">Selected Gate Findings &amp; Remediation</h2>
+                  <span class="card-meta" id="gate-detail-ref">ucp.dev/specification/overview</span>
+                </div>
+                <p class="gate-detail-summary" id="gate-detail-summary"></p>
+                <ul class="finding-list" id="gate-finding-list"></ul>
+                <div id="gate-empty-findings" class="empty-slot" hidden>
+                  Zero findings on this gate. All specification checks passed.
+                </div>
+              </section>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- TAB 2: Interactive 1-Click /.well-known/ucp Manifest Builder     -->
+        <!-- ================================================================ -->
+        <section id="view-builder" role="tabpanel" aria-labelledby="tab-builder" hidden>
+          <div class="title-row">
+            <div>
+              <div class="title-cluster">
+                <h1 class="page-title">1-Click /.well-known/ucp Manifest &amp; Edge Route Builder</h1>
+                <span class="status-pill pill-positive num" id="builder-score-pill">100 / 100 · Grade A</span>
+              </div>
+              <p class="page-finding" id="builder-finding">
+                Generates deterministic RFC 4122 UUIDv5 payment handler IDs, Stateless MCP 2026-07-28 bindings, A2A agent.json, and CORS/Cache edge configs.
+              </p>
+            </div>
+            <div class="title-actions">
+              <button type="button" class="btn btn-secondary" id="btn-send-to-auditor">
+                Audit generated bundle in Tab 1
+              </button>
+              <button type="button" class="btn btn-primary" id="btn-download-artifact">
+                Download active file
+              </button>
+            </div>
+          </div>
+
+          <div id="builder-error" class="inline-error" hidden></div>
+
+          <div class="workbench-grid">
+            <!-- Left 444px Configuration Form -->
+            <section class="card-panel" aria-labelledby="builder-form-heading">
+              <div class="card-header">
+                <h2 class="card-title" id="builder-form-heading">Merchant &amp; Protocol Configuration</h2>
+                <span class="card-meta">Spec <code>2026-01-23</code></span>
+              </div>
+
+              <div class="form-stack">
+                <div class="form-field">
+                  <label class="field-label" for="inp-domain">Merchant public domain</label>
+                  <input type="text" id="inp-domain" class="text-input" value="nordic-roast.shop" aria-describedby="domain-help">
+                  <span class="field-help" id="domain-help">Public DNS hostname only (rejects localhost and RFC1918 IPs).</span>
+                </div>
+
+                <div class="form-two-col">
+                  <div class="form-field">
+                    <label class="field-label" for="sel-platform">Commerce platform</label>
+                    <select id="sel-platform" class="select-input">
+                      <option value="shopify">Shopify (REST + Stateless MCP)</option>
+                      <option value="stateless_mcp">Stateless MCP + OpenAPI</option>
+                      <option value="custom_rest">Custom REST OpenAPI</option>
+                    </select>
+                  </div>
+                  <div class="form-field">
+                    <label class="field-label" for="inp-version">UCP release date</label>
+                    <input type="text" id="inp-version" class="text-input num" value="2026-01-23">
+                  </div>
+                </div>
+
+                <fieldset class="choice-fieldset">
+                  <legend class="field-label">Enabled UCP capabilities (<code>ucp.capabilities</code>)</legend>
+                  <label class="choice-row">
+                    <input type="checkbox" name="gen-cap" value="dev.ucp.shopping.checkout" checked disabled>
+                    <span><code>dev.ucp.shopping.checkout</code> (Required core checkout)</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="checkbox" name="gen-cap" value="dev.ucp.shopping.fulfillment" checked>
+                    <span><code>dev.ucp.shopping.fulfillment</code> (extends checkout)</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="checkbox" name="gen-cap" value="dev.ucp.shopping.discount" checked>
+                    <span><code>dev.ucp.shopping.discount</code> (extends checkout)</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="checkbox" name="gen-cap" value="dev.ucp.shopping.order" checked>
+                    <span><code>dev.ucp.shopping.order</code> (post-purchase lifecycle)</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="checkbox" name="gen-cap" value="dev.ucp.shopping.ap2_mandate" checked>
+                    <span><code>dev.ucp.shopping.ap2_mandate</code> (AP2 CheckoutMandate + SD-JWT-VC)</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="checkbox" name="gen-cap" value="dev.ucp.identity_linking">
+                    <span><code>dev.ucp.identity_linking</code> (OAuth account linking)</span>
+                  </label>
+                </fieldset>
+
+                <fieldset class="choice-fieldset">
+                  <legend class="field-label">Tokenized payment handlers (<code>ucp.payment_handlers</code>)</legend>
+                  <label class="choice-row">
+                    <input type="checkbox" name="gen-handler" value="com.google.pay" checked>
+                    <span><code>com.google.pay</code> (Google Pay Wallet + AP2)</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="checkbox" name="gen-handler" value="com.stripe.pay" checked>
+                    <span><code>com.stripe.pay</code> (Stripe Shared Payment Token)</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="checkbox" name="gen-handler" value="shop.pay" checked>
+                    <span><code>shop.pay</code> (Shopify Shop Pay Express)</span>
+                  </label>
+                </fieldset>
+
+                <fieldset class="choice-fieldset">
+                  <legend class="field-label">Supported ISO 4217 checkout currencies</legend>
+                  <div class="currency-grid">
+                    <label class="choice-row"><input type="checkbox" name="gen-cur" value="USD" checked><span>USD</span></label>
+                    <label class="choice-row"><input type="checkbox" name="gen-cur" value="JPY"><span>JPY</span></label>
+                    <label class="choice-row"><input type="checkbox" name="gen-cur" value="EUR"><span>EUR</span></label>
+                    <label class="choice-row"><input type="checkbox" name="gen-cur" value="GBP"><span>GBP</span></label>
+                  </div>
+                </fieldset>
+              </div>
+            </section>
+
+            <!-- Right 684px Artifact Output & Edge Config Exporter -->
+            <section class="card-panel" aria-labelledby="artifact-heading">
+              <div class="card-header">
+                <h2 class="card-title" id="artifact-heading">Production Deployment Artifacts</h2>
+                <button type="button" class="btn btn-secondary" id="btn-copy-artifact">
+                  Copy active snippet
+                </button>
+              </div>
+
+              <div class="artifact-tabs" role="tablist" aria-label="Deployment artifact selector">
+                <button type="button" class="chip-btn" data-artifact="manifest" aria-pressed="true">
+                  /.well-known/ucp
+                </button>
+                <button type="button" class="chip-btn" data-artifact="worker" aria-pressed="false">
+                  Cloudflare Worker (CORS + Cache)
+                </button>
+                <button type="button" class="chip-btn" data-artifact="nginx" aria-pressed="false">
+                  Nginx TLS Location
+                </button>
+                <button type="button" class="chip-btn" data-artifact="agent_card" aria-pressed="false">
+                  /.well-known/agent.json
+                </button>
+                <button type="button" class="chip-btn" data-artifact="schema_org" aria-pressed="false">
+                  Schema.org Offer JSON-LD
+                </button>
+              </div>
+
+              <pre class="code-output"><code id="artifact-code"></code></pre>
+            </section>
+          </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- Multi-Store Agency & AI Shopping Developer API Callout           -->
+        <!-- ================================================================ -->
+        <aside class="agency-callout" aria-labelledby="callout-heading">
+          <div class="callout-copy">
+            <h2 class="callout-title" id="callout-heading">Auditing 50 to 50,000 E-Commerce Stores for UCP, Catalog Feeds &amp; Tech Stacks?</h2>
+            <p class="callout-desc">
+              Single-store validation above runs 100% locally in your browser. When E-Commerce agencies, SEO/GEO consultants, or AI shopping teams need automated multi-domain product feed normalization, variant pricing parity, and storefront tech-stack discovery at scale, connect directly to our live Pay-Per-Event APIs and offline engineering guides crafted by peco.
+            </p>
+          </div>
+          <div class="callout-links">
+            <a class="btn btn-primary" href="https://apify.com/pecopeko/shopify-public-catalog-feed-extractor" target="_blank" rel="noopener noreferrer">
+              Shopify Catalog Feed API ($1 / 1k products)
+            </a>
+            <a class="btn btn-secondary" href="https://apify.com/pecopeko/website-tech-stack-sitemap-extractor" target="_blank" rel="noopener noreferrer">
+              Tech Stack &amp; Sitemap API ($2 / 1k sites)
+            </a>
+            <a class="btn btn-secondary" href="https://zenn.dev/pecopeko/books/afml-quant-and-local-ai-guard" target="_blank" rel="noopener noreferrer">
+              Zenn Engineering Book (¥1,200)
+            </a>
+            <a class="btn btn-secondary" href="https://pecopeko1011.booth.pm/items/9179705" target="_blank" rel="noopener noreferrer">
+              BOOTH Offline Pro Kit (¥1,980)
+            </a>
+          </div>
+        </aside>
+
+        <footer class="sheet-footer">
+          <span>Crafted by peco · Apache-2.0 · Official <code>ucp.dev</code> (<code>2026-01-23</code>) &amp; AP2 Mandate Readiness · Zero outbound telemetry</span>
+          <nav class="footer-links" aria-label="Developer resources">
+            <a href="https://github.com/pecopeko/ucp-agentic-commerce-auditor" target="_blank" rel="noopener noreferrer">GitHub Repo &amp; Python CLI</a>
+            <a href="https://apify.com/pecopeko/shopify-public-catalog-feed-extractor" target="_blank" rel="noopener noreferrer">Shopify Catalog PPE Actor</a>
+            <a href="https://apify.com/pecopeko/website-tech-stack-sitemap-extractor" target="_blank" rel="noopener noreferrer">Website Tech Stack PPE Actor</a>
+            <a href="https://github.com/sponsors/pecopeko" target="_blank" rel="noopener noreferrer">GitHub Sponsors</a>
+          </nav>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

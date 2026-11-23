@@ -1,0 +1,11 @@
+{
+  "name": "ucp-agentic-commerce-auditor",
+  "version": "1.0.0",
+  "description": "Zero-backend 10-gate Universal Commerce Protocol (/.well-known/ucp, 2026-01-23), AP2 payment mandate, Stateless MCP (2026-07-28), and A2A (/.well-known/agent.json) readiness auditor + 1-click manifest and Cloudflare Worker builder.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "author": "peco <pecopeko@users.noreply.github.com>",
+  "scripts": {
+    "test": "node --test test/engine.test.mjs"
+  }
+}
